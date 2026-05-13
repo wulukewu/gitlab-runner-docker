@@ -1,0 +1,12 @@
+services:
+  gitlab-runner:
+    build: .
+    container_name: ${RUNNER_NAME:-gitlab-runner}
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "${DASHBOARD_PORT:-8080}:${DASHBOARD_PORT:-8080}"
+    volumes:
+      # Mount Docker socket for Docker executor (local dev only, not available on Render)
+      - /var/run/docker.sock:/var/run/docker.sock
