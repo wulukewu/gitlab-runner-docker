@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="earGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCA326" />
+      <stop offset="100%" stop-color="#FC6D26" />
+    </linearGradient>
+    <linearGradient id="cheekGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FC6D26" />
+      <stop offset="100%" stop-color="#E24329" />
+    </linearGradient>
+    <linearGradient id="cheekGradR" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FC6D26" />
+      <stop offset="100%" stop-color="#E24329" />
+    </linearGradient>
+    <linearGradient id="snoutGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#E24329" />
+      <stop offset="100%" stop-color="#c13822" />
+    </linearGradient>
+    <linearGradient id="foreheadGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FCA326" />
+      <stop offset="100%" stop-color="#E24329" />
+    </linearGradient>
+  </defs>
+
+  <!-- Geometric 3D Fox / Network Topology -->
+  
+  <!-- Forehead (creates a hexagon/cube illusion at the top) -->
+  <path d="M45 50 L75 50 L85 15 L35 15 Z" fill="url(#foreheadGrad)" opacity="0.9"/>
+  
+  <!-- Left Ear -->
+  <path d="M15 50 L35 15 L45 50 Z" fill="url(#earGrad)" />
+  <!-- Right Ear -->
+  <path d="M105 50 L85 15 L75 50 Z" fill="url(#earGrad)" />
+  
+  <!-- Left Cheek -->
+  <path d="M60 105 L15 50 L45 50 Z" fill="url(#cheekGrad)" />
+  <!-- Right Cheek -->
+  <path d="M60 105 L105 50 L75 50 Z" fill="url(#cheekGradR)" />
+  
+  <!-- Center Snout -->
+  <path d="M60 105 L45 50 L75 50 Z" fill="url(#snoutGrad)" />
+
+  <!-- Tech Nodes (Connection points) -->
+  <g fill="#FFF" opacity="0.9">
+    <circle cx="60" cy="105" r="5" />
+    <circle cx="15" cy="50" r="5" />
+    <circle cx="105" cy="50" r="5" />
+    <circle cx="35" cy="15" r="5" />
+    <circle cx="85" cy="15" r="5" />
+    <circle cx="45" cy="50" r="4" />
+    <circle cx="75" cy="50" r="4" />
+  </g>
+  
+  <!-- Inner node dots -->
+  <g fill="#E24329">
+    <circle cx="60" cy="105" r="2.5" />
+    <circle cx="15" cy="50" r="2.5" fill="#FC6D26" />
+    <circle cx="105" cy="50" r="2.5" fill="#FC6D26" />
+    <circle cx="35" cy="15" r="2.5" fill="#FCA326" />
+    <circle cx="85" cy="15" r="2.5" fill="#FCA326" />
+  </g>
+</svg>

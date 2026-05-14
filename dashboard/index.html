@@ -1,314 +1,506 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GitLab Runner Dashboard</title>
-<style>
-  :root {
-    --bg: #f8f9fb;
-    --card: #fff;
-    --border: #e2e5ea;
-    --text: #1a1d23;
-    --muted: #6b7280;
-    --green: #16a34a; --green-bg: #dcfce7;
-    --red: #dc2626; --red-bg: #fee2e2;
-    --blue: #2563eb; --blue-bg: #dbeafe;
-    --yellow: #ca8a04; --yellow-bg: #fef9c3;
-    --gray-bg: #f3f4f6;
-    --orange: #ea580c; --orange-bg: #ffedd5;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitLab Runner Dashboard</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
 
-  .header {
-    background: #18181b; color: #fff;
-    padding: 16px 24px;
-    display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
-  }
-  .header h1 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
-  .header h1 .logo { width: 22px; height: 22px; border-radius: 4px; background: #e24329; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
-  .header-right { display: flex; align-items: center; gap: 12px; font-size: 13px; color: rgba(255,255,255,.6); }
-  .header-right button {
-    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
-    color: #fff; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
-  }
-  .header-right button:hover { background: rgba(255,255,255,.2); }
-  .group-tag { background: rgba(255,255,255,.12); padding: 3px 10px; border-radius: 5px; font-size: 12px; color: rgba(255,255,255,.7); }
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  <!-- Vue 3 and Tailwind CSS via CDN -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
-  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
-  .stat .value { font-size: 28px; font-weight: 700; line-height: 1.1; }
-  .stat .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
-
-  .section { margin-bottom: 28px; }
-  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
-
-  /* Runner card — parent runner */
-  .runner-card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 10px; padding: 18px; margin-bottom: 12px;
-  }
-  .runner-card .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .runner-card .name { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  .runner-card .meta { font-size: 12px; color: var(--muted); line-height: 1.7; }
-  .runner-card .meta span { margin-right: 14px; }
-  .runner-card .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .runner-card .tag { background: var(--gray-bg); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 4px; }
-
-  /* Instance table inside runner card */
-  .instances { margin-top: 14px; }
-  .instances-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-  .instance-table { width: 100%; border-collapse: collapse; }
-  .instance-table th {
-    text-align: left; padding: 6px 12px; font-size: 10px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
-    background: #fafbfc; border-bottom: 1px solid var(--border);
-  }
-  .instance-table td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
-  .instance-table tr:last-child td { border-bottom: none; }
-  .instance-table code { font-size: 11px; background: var(--gray-bg); padding: 1px 6px; border-radius: 3px; }
-
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; }
-  .badge-online, .badge-active, .badge-success { background: var(--green-bg); color: var(--green); }
-  .badge-offline, .badge-failed { background: var(--red-bg); color: var(--red); }
-  .badge-paused { background: var(--yellow-bg); color: var(--yellow); }
-  .badge-running { background: var(--blue-bg); color: var(--blue); }
-  .badge-stale { background: var(--orange-bg); color: var(--orange); }
-  .badge-canceled, .badge-pending, .badge-created, .badge-skipped, .badge-idle { background: var(--gray-bg); color: var(--muted); }
-
-  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-  .dot-green { background: var(--green); } .dot-red { background: var(--red); } .dot-yellow { background: var(--yellow); }
-
-  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
-  table.jobs { width: 100%; border-collapse: collapse; }
-  table.jobs th { text-align: left; padding: 10px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--border); }
-  table.jobs td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
-  table.jobs tr:last-child td { border-bottom: none; }
-  td a { color: var(--blue); text-decoration: none; }
-  td a:hover { text-decoration: underline; }
-
-  .empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; }
-  .error-banner { background: var(--red-bg); color: var(--red); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
-  .pulse { animation: pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
-  .loading-instances { font-size: 12px; color: var(--muted); padding: 8px 0; }
-</style>
-</head>
-<body>
-
-<div class="header">
-  <h1>
-    <span class="logo">G</span> Runner Dashboard
-    <span class="group-tag" id="groupTag" style="display:none"></span>
-  </h1>
-  <div class="header-right">
-    <span id="lastUpdate"></span>
-    <button onclick="refresh()">↻ Refresh</button>
-  </div>
-</div>
-
-<div class="container">
-  <div id="error"></div>
-
-  <div class="stats">
-    <div class="stat"><div class="value" id="sTotal">–</div><div class="label">Total Runners</div></div>
-    <div class="stat"><div class="value" id="sInstances">–</div><div class="label">Instances</div></div>
-    <div class="stat"><div class="value" id="sOnline">–</div><div class="label">Online</div></div>
-    <div class="stat"><div class="value" id="sRunning">–</div><div class="label">Running Jobs</div></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Runners</div>
-    <div id="runners"><div class="empty pulse">Loading runners…</div></div>
-  </div>
-
-  <div class="section">
-    <div class="section-title">Recent Jobs</div>
-    <div id="jobs"><div class="empty pulse">Loading jobs…</div></div>
-  </div>
-</div>
-
-<script>
-  let timer;
-
-  async function api(path) {
-    const r = await fetch('/api' + path);
-    if (!r.ok) throw new Error(`API error ${r.status}`);
-    return r.json();
-  }
-
-  function ago(d) {
-    if (!d) return '–';
-    const s = Math.floor((Date.now() - new Date(d)) / 1000);
-    if (s < 60) return s + 's ago';
-    if (s < 3600) return Math.floor(s / 60) + 'm ago';
-    if (s < 86400) return Math.floor(s / 3600) + 'h ago';
-    return Math.floor(s / 86400) + 'd ago';
-  }
-
-  function dur(sec) {
-    if (!sec) return '–';
-    const s = Math.round(sec);
-    if (s < 60) return s + 's';
-    if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
-    return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
-  }
-
-  function badge(st) {
-    return `<span class="badge badge-${st || 'unknown'}">${st || 'unknown'}</span>`;
-  }
-
-  function dot(st) {
-    const c = (st === 'online' || st === 'active') ? 'green' : st === 'paused' ? 'yellow' : 'red';
-    return `<span class="dot dot-${c}"></span>`;
-  }
-
-  function renderInstancesTable(managers) {
-    if (!managers || managers.length === 0) return '';
-    return `
-      <div class="instances">
-        <div class="instances-title">Instances (${managers.length})</div>
-        <table class="instance-table">
-          <thead><tr>
-            <th>Status</th><th>System ID</th><th>Version</th>
-            <th>IP</th><th>Executor</th><th>Platform</th><th>Last Contact</th>
-          </tr></thead>
-          <tbody>${managers.map(m => `<tr>
-            <td>${badge(m.status || 'offline')}</td>
-            <td><code>${m.system_id || m.system_xid || '–'}</code></td>
-            <td>${m.version || '–'}</td>
-            <td>${m.ip_address || '–'}</td>
-            <td>${m.executor_type || m.config?.executor || '–'}</td>
-            <td>${m.architecture || '–'}${m.platform ? '/' + m.platform : ''}</td>
-            <td>${m.contacted_at ? ago(m.contacted_at) : '–'}</td>
-          </tr>`).join('')}</tbody>
-        </table>
-      </div>`;
-  }
-
-  async function refresh() {
-    try {
-      document.getElementById('error').innerHTML = '';
-
-      const [health, runners] = await Promise.all([
-        api('/health').catch(() => null),
-        api('/runners?per_page=100')
-      ]);
-
-      if (health && health.group_id) {
-        const tag = document.getElementById('groupTag');
-        tag.textContent = 'Group ' + health.group_id;
-        tag.style.display = '';
-      }
-
-      document.getElementById('sTotal').textContent = runners.length;
-
-      // Render initial runner cards (without instances yet)
-      const runnersEl = document.getElementById('runners');
-      if (runners.length === 0) {
-        runnersEl.innerHTML = '<div class="empty">No runners found — check GITLAB_API_TOKEN and GITLAB_GROUP_ID</div>';
-      } else {
-        runnersEl.innerHTML = runners.map(r => {
-          const st = r.status || (r.online ? 'online' : 'offline');
-          const tags = (r.tag_list || []).map(t => `<span class="tag">${t}</span>`).join('');
-          return `
-            <div class="runner-card" id="runner-${r.id}">
-              <div class="top">
-                <div class="name">${dot(st)} ${r.description || '#' + r.id}</div>
-                ${badge(st)}
-              </div>
-              <div class="meta">
-                <span>ID: ${r.id}</span>
-                <span>IP: ${r.ip_address || '–'}</span>
-                ${r.version ? '<span>v' + r.version + '</span>' : ''}
-                ${r.architecture ? '<span>' + r.architecture + '</span>' : ''}
-              </div>
-              ${tags ? '<div class="tags">' + tags + '</div>' : ''}
-              <div class="instances-slot"><div class="loading-instances pulse">Loading instances…</div></div>
-            </div>`;
-        }).join('');
-      }
-
-      // Fetch managers for each runner in parallel
-      let totalInstances = 0;
-      let totalOnline = 0;
-      const managerResults = await Promise.allSettled(
-        runners.map(r => api(`/runners/${r.id}/managers?per_page=100`))
-      );
-
-      runners.forEach((r, i) => {
-        const card = document.getElementById(`runner-${r.id}`);
-        if (!card) return;
-        const slot = card.querySelector('.instances-slot');
-
-        if (managerResults[i].status === 'fulfilled') {
-          const managers = managerResults[i].value;
-          totalInstances += managers.length;
-          totalOnline += managers.filter(m => m.status === 'online').length;
-          slot.innerHTML = renderInstancesTable(managers);
-        } else {
-          // /managers endpoint might not exist — show runner-level info only
-          slot.innerHTML = '';
-          totalInstances += 1;
-          const st = r.status || (r.online ? 'online' : 'offline');
-          if (st === 'online') totalOnline += 1;
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: '#FC6D26',
+            brandDark: '#E24329',
+            brandYellow: '#FCA326',
+          }
         }
-      });
-
-      document.getElementById('sInstances').textContent = totalInstances;
-      document.getElementById('sOnline').textContent = totalOnline;
-
-      // Fetch jobs
-      const jobResults = await Promise.allSettled(
-        runners.slice(0, 10).map(r =>
-          api(`/runners/${r.id}/jobs?per_page=15&order_by=id`)
-            .then(jobs => jobs.map(j => ({ ...j, _runner: r.description || '#' + r.id })))
-        )
-      );
-
-      let allJobs = jobResults.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
-      const seen = new Set();
-      allJobs = allJobs.filter(j => { if (seen.has(j.id)) return false; seen.add(j.id); return true; });
-      allJobs.sort((a, b) => b.id - a.id);
-
-      document.getElementById('sRunning').textContent = allJobs.filter(j => j.status === 'running').length;
-
-      const recent = allJobs.slice(0, 25);
-      const jobsEl = document.getElementById('jobs');
-      if (recent.length === 0) {
-        jobsEl.innerHTML = '<div class="empty">No recent jobs</div>';
-      } else {
-        jobsEl.innerHTML = `
-          <div class="table-wrap"><table class="jobs">
-            <thead><tr><th>Status</th><th>Job</th><th>Pipeline</th><th>Stage</th><th>Runner</th><th>Duration</th><th>When</th></tr></thead>
-            <tbody>${recent.map(j => `<tr>
-              <td>${badge(j.status)}</td>
-              <td>${j.web_url ? '<a href="' + j.web_url + '" target="_blank">#' + j.id + '</a>' : '#' + j.id}</td>
-              <td>${j.pipeline ? '<a href="' + j.pipeline.web_url + '" target="_blank">#' + j.pipeline.id + '</a>' : '–'}</td>
-              <td>${j.stage || '–'}</td>
-              <td>${j._runner}</td>
-              <td>${dur(j.duration)}</td>
-              <td>${ago(j.created_at)}</td>
-            </tr>`).join('')}</tbody>
-          </table></div>`;
       }
+    }
+  </script>
 
-      document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
-    } catch (e) {
-      document.getElementById('error').innerHTML =
-        `<div class="error-banner">⚠ ${e.message} — check GITLAB_API_TOKEN and GITLAB_GROUP_ID.</div>`;
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
     }
 
-    clearTimeout(timer);
-    timer = setTimeout(refresh, 15000);
-  }
+    [v-cloak] { display: none; }
 
-  refresh();
-</script>
+    /* Vue Transitions */
+    .list-enter-active,
+    .list-leave-active {
+      transition: all 0.5s ease;
+    }
+    .list-enter-from {
+      opacity: 0;
+      transform: translateY(-15px);
+    }
+    .list-leave-to {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    .list-move {
+      transition: transform 0.5s ease;
+    }
+
+    .fade-enter-active,
+    .fade-leave-active {
+      transition: opacity 0.3s ease;
+    }
+    .fade-enter-from,
+    .fade-leave-to {
+      opacity: 0;
+    }
+
+    /* Scrollbar Styling for a premium feel */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
+      background: #64748b;
+    }
+  </style>
+</head>
+<body class="bg-gray-50 text-slate-900 dark:bg-slate-900 dark:text-gray-100 transition-colors duration-300 min-h-screen relative">
+  
+  <!-- Ambient Background Glow -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div class="absolute -top-[20%] -right-[10%] w-[500px] h-[500px] bg-brand/10 dark:bg-brand/5 blur-[100px] rounded-full mix-blend-multiply dark:mix-blend-lighten"></div>
+    <div class="absolute top-[20%] -left-[10%] w-[400px] h-[400px] bg-brandYellow/10 dark:bg-brandYellow/5 blur-[100px] rounded-full mix-blend-multiply dark:mix-blend-lighten"></div>
+  </div>
+
+  <div id="app" v-cloak class="relative z-10">
+    <!-- Top Brand Strip -->
+    <div class="h-1 w-full bg-gradient-to-r from-brandYellow via-brand to-brandDark z-50 relative"></div>
+    
+    <!-- Top Navigation Bar -->
+    <nav class="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-brand/10 dark:border-brand/20 shadow-sm transition-colors duration-300">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <!-- Left side: Logo and Title -->
+          <div class="flex items-center gap-3">
+            <img src="logo.svg" alt="GitLab Logo" class="w-8 h-8 drop-shadow-sm">
+            <h1 class="text-lg font-bold tracking-tight">GitLab Runner Dashboard</h1>
+            <span v-if="health && health.group_id" class="ml-2 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-slate-700">
+              Group {{ health.group_id }}
+            </span>
+          </div>
+          
+          <!-- Right side: Controls -->
+          <div class="flex items-center gap-4">
+            <span class="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline-block">
+              {{ lastUpdateText }}
+            </span>
+            
+            <!-- Refresh Button -->
+            <button @click="refresh(true)" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brand/10 dark:hover:bg-brand/20 hover:text-brand transition-colors text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-brand/30 dark:hover:border-brand/40" title="Refresh data">
+              <svg :class="{ 'animate-spin': isRefreshing }" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+              </svg>
+            </button>
+            
+            <!-- Theme Toggle -->
+            <button @click="toggleDark" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-brandYellow/10 dark:hover:bg-brandYellow/20 hover:text-brandYellow transition-colors text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-brandYellow/30 dark:hover:border-brandYellow/40" title="Toggle Light/Dark Mode">
+              <svg v-if="!isDark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      
+      <!-- Error Banner -->
+      <transition name="fade">
+        <div v-if="error" class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 p-4 rounded-xl flex items-start gap-3 shadow-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 shrink-0 mt-0.5">
+            <path fill-rule="evenodd" d="M9.401 3.003c1.155-2 4.043-2 5.197 0l7.355 12.748c1.154 2-.29 4.5-2.599 4.5H4.645c-2.309 0-3.752-2.5-2.598-4.5L9.4 3.003ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75Zm0 8.25a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+          </svg>
+          <span class="text-sm font-medium">{{ error }}</span>
+        </div>
+      </transition>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div v-for="(stat, idx) in stats" :key="idx" class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:shadow-md hover:border-brand/30 dark:hover:border-brand/40 group">
+          <div class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2 group-hover:text-brand transition-colors">{{ stat.label }}</div>
+          <div class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">{{ stat.value }}</div>
+        </div>
+      </div>
+
+      <!-- Runners Section -->
+      <section>
+        <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 pl-1">Runners Infrastructure</h2>
+        
+        <div v-if="runners.length === 0 && !isInitialLoad" class="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-700 border-dashed">
+          <p class="text-slate-500 dark:text-slate-400 text-sm">No runners found. Please check GITLAB_API_TOKEN and GITLAB_GROUP_ID.</p>
+        </div>
+
+        <div v-else-if="isInitialLoad && runners.length === 0" class="flex justify-center p-12">
+          <div class="animate-pulse flex items-center gap-2 text-slate-500">
+            <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+          </div>
+        </div>
+        
+        <div v-else class="space-y-4 relative">
+          <transition-group name="list">
+            <div v-for="r in runners" :key="r.id" class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm transition-all hover:shadow-md hover:border-brand/30 dark:hover:border-brand/40 group">
+              <!-- Runner Header -->
+              <div class="p-5 border-b border-slate-100 dark:border-slate-700/50">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="flex items-center gap-3">
+                    <span class="relative flex h-3 w-3">
+                      <span v-if="r._status === 'online'" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-3 w-3" :class="statusColor(r._status)"></span>
+                    </span>
+                    <h3 class="font-semibold text-base">{{ r.description || '#' + r.id }}</h3>
+                    <span :class="badgeClass(r._status)">{{ r._status }}</span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+                    <div class="flex items-center gap-1.5"><span class="font-medium">ID:</span> {{ r.id }}</div>
+                    <div v-if="r.ip_address" class="flex items-center gap-1.5"><span class="font-medium">IP:</span> {{ r.ip_address }}</div>
+                    <div v-if="r.version" class="flex items-center gap-1.5"><span class="font-medium">v</span>{{ r.version }}</div>
+                  </div>
+                </div>
+                
+                <!-- Tags -->
+                <div v-if="r.tag_list && r.tag_list.length > 0" class="flex flex-wrap gap-2 mt-4">
+                  <span v-for="tag in r.tag_list" :key="tag" class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 text-xs font-medium border border-slate-200 dark:border-slate-600">
+                    {{ tag }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Instances Table -->
+              <div class="bg-slate-50/50 dark:bg-slate-800/50 transition-all">
+                <div v-if="!r._managers" class="p-4 text-center">
+                  <span class="inline-block w-4 h-4 border-2 border-slate-300 border-t-brand rounded-full animate-spin"></span>
+                </div>
+                <div v-else-if="r._managers.length === 0" class="px-5 py-4 text-xs text-slate-500 dark:text-slate-400 italic">
+                  No instances actively reporting for this runner.
+                </div>
+                <div v-else class="overflow-x-auto">
+                  <table class="w-full text-left text-sm">
+                    <thead>
+                      <tr class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                        <th class="px-5 py-3 font-medium">Status</th>
+                        <th class="px-5 py-3 font-medium">System ID</th>
+                        <th class="px-5 py-3 font-medium">Version</th>
+                        <th class="px-5 py-3 font-medium">IP</th>
+                        <th class="px-5 py-3 font-medium">Platform</th>
+                        <th class="px-5 py-3 font-medium">Last Contact</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                      <tr v-for="m in r._managers" :key="m.system_id || m.system_xid" class="hover:bg-slate-100/50 dark:hover:bg-slate-700/30 transition-colors">
+                        <td class="px-5 py-3"><span :class="badgeClass(m.status || 'offline')">{{ m.status || 'offline' }}</span></td>
+                        <td class="px-5 py-3"><code class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-xs font-mono text-slate-800 dark:text-slate-300">{{ m.system_id || m.system_xid || '–' }}</code></td>
+                        <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ m.version || '–' }}</td>
+                        <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ m.ip_address || '–' }}</td>
+                        <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ m.architecture || '–' }}{{ m.platform ? '/' + m.platform : '' }}</td>
+                        <td class="px-5 py-3 text-slate-500 dark:text-slate-400">{{ m.contacted_at ? ago(m.contacted_at) : '–' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </transition-group>
+        </div>
+      </section>
+
+      <!-- Recent Jobs Section -->
+      <section>
+        <h2 class="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-4 pl-1">Recent Jobs</h2>
+        
+        <div v-if="jobs.length === 0 && !isInitialLoad" class="bg-white dark:bg-slate-800 rounded-2xl p-12 text-center border border-slate-200 dark:border-slate-700 border-dashed">
+          <p class="text-slate-500 dark:text-slate-400 text-sm">No recent jobs found.</p>
+        </div>
+
+        <div v-else-if="isInitialLoad && jobs.length === 0" class="flex justify-center p-12">
+          <div class="animate-pulse flex items-center gap-2 text-slate-500">
+            <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+            <div class="w-2 h-2 bg-slate-400 rounded-full"></div>
+          </div>
+        </div>
+
+        <div v-else class="bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm hover:border-brand/30 dark:hover:border-brand/40 transition-all">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm whitespace-nowrap">
+              <thead>
+                <tr class="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                  <th class="px-5 py-3.5 font-medium">Status</th>
+                  <th class="px-5 py-3.5 font-medium">Job</th>
+                  <th class="px-5 py-3.5 font-medium">Pipeline</th>
+                  <th class="px-5 py-3.5 font-medium">Stage</th>
+                  <th class="px-5 py-3.5 font-medium">Runner</th>
+                  <th class="px-5 py-3.5 font-medium">Duration</th>
+                  <th class="px-5 py-3.5 font-medium">When</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 relative">
+                <transition-group name="list">
+                  <tr v-for="j in jobs" :key="j.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                    <td class="px-5 py-3"><span :class="badgeClass(j.status)">{{ j.status }}</span></td>
+                    <td class="px-5 py-3">
+                      <a v-if="j.web_url" :href="j.web_url" target="_blank" class="font-medium text-brand hover:text-brandDark transition-colors">#{{ j.id }}</a>
+                      <span v-else>#{{ j.id }}</span>
+                    </td>
+                    <td class="px-5 py-3">
+                      <a v-if="j.pipeline" :href="j.pipeline?.web_url" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">#{{ j.pipeline.id }}</a>
+                      <span v-else class="text-slate-400">–</span>
+                    </td>
+                    <td class="px-5 py-3 text-slate-600 dark:text-slate-300">{{ j.stage || '–' }}</td>
+                    <td class="px-5 py-3 text-slate-600 dark:text-slate-300 font-medium truncate max-w-[200px]" :title="j._runner">{{ j._runner }}</td>
+                    <td class="px-5 py-3 text-slate-500 dark:text-slate-400 font-mono text-xs">{{ dur(j.duration) }}</td>
+                    <td class="px-5 py-3 text-slate-500 dark:text-slate-400">{{ ago(j.created_at) }}</td>
+                  </tr>
+                </transition-group>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      
+    </main>
+  </div>
+
+  <script>
+    const { createApp, ref, computed, onMounted, onUnmounted } = Vue;
+
+    createApp({
+      setup() {
+        const isDark = ref(true);
+        const isInitialLoad = ref(true);
+        const isRefreshing = ref(false);
+        const health = ref(null);
+        const runners = ref([]);
+        const jobs = ref([]);
+        const error = ref('');
+        const lastUpdate = ref(new Date());
+        let timer = null;
+
+        // Statistics computed from reactive data
+        const stats = computed(() => {
+          let totalInst = 0;
+          let onlineInst = 0;
+          runners.value.forEach(r => {
+            if (r._managers) {
+              totalInst += r._managers.length;
+              onlineInst += r._managers.filter(m => m.status === 'online').length;
+            } else {
+              totalInst += 1;
+              if (r._status === 'online') onlineInst += 1;
+            }
+          });
+
+          const runningJobs = jobs.value.filter(j => j.status === 'running').length;
+
+          return [
+            { label: 'Total Runners', value: runners.value.length || '–' },
+            { label: 'Instances', value: isInitialLoad.value ? '–' : totalInst },
+            { label: 'Online', value: isInitialLoad.value ? '–' : onlineInst },
+            { label: 'Running Jobs', value: isInitialLoad.value ? '–' : runningJobs },
+          ];
+        });
+
+        const lastUpdateText = computed(() => {
+          return `Updated ${lastUpdate.value.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`;
+        });
+
+        // Theme toggle logic
+        const toggleDark = () => {
+          isDark.value = !isDark.value;
+          if (isDark.value) {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+          }
+        };
+
+        const initTheme = () => {
+          if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            isDark.value = true;
+            document.documentElement.classList.add('dark');
+          } else if (localStorage.theme === 'light') {
+            isDark.value = false;
+            document.documentElement.classList.remove('dark');
+          } else {
+            // Default to dark mode for a tech aesthetic if no preference
+            isDark.value = true;
+            document.documentElement.classList.add('dark');
+          }
+        };
+
+        // Utility functions
+        const api = async (path) => {
+          const r = await fetch('/api' + path);
+          if (!r.ok) throw new Error(`API error ${r.status}`);
+          return r.json();
+        };
+
+        const ago = (d) => {
+          if (!d) return '–';
+          const s = Math.floor((Date.now() - new Date(d)) / 1000);
+          if (s < 60) return s + 's ago';
+          if (s < 3600) return Math.floor(s / 60) + 'm ago';
+          if (s < 86400) return Math.floor(s / 3600) + 'h ago';
+          return Math.floor(s / 86400) + 'd ago';
+        };
+
+        const dur = (sec) => {
+          if (!sec) return '–';
+          const s = Math.round(sec);
+          if (s < 60) return s + 's';
+          if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+          return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+        };
+
+        const statusColor = (st) => {
+          if (st === 'online' || st === 'active') return 'bg-emerald-500';
+          if (st === 'paused') return 'bg-amber-500';
+          return 'bg-rose-500';
+        };
+
+        const badgeClass = (st) => {
+          const base = "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-semibold capitalize border ";
+          if (st === 'online' || st === 'active' || st === 'success') 
+            return base + "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20";
+          if (st === 'offline' || st === 'failed' || st === 'canceled') 
+            return base + "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20";
+          if (st === 'paused') 
+            return base + "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20";
+          if (st === 'running') 
+            return base + "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20";
+          if (st === 'stale') 
+            return base + "bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/20";
+          
+          return base + "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
+        };
+
+        // Data fetching
+        const refresh = async (manual = false) => {
+          if (manual) isRefreshing.value = true;
+          
+          try {
+            const [healthData, runnersData] = await Promise.all([
+              api('/health').catch(() => null),
+              api('/runners?per_page=100')
+            ]);
+            
+            health.value = healthData;
+            error.value = '';
+
+            // Update runners without destroying existing state to avoid flickering
+            const newRunners = runnersData.map(nr => {
+              nr._status = nr.status || (nr.online ? 'online' : 'offline');
+              const existing = runners.value.find(r => r.id === nr.id);
+              if (existing) {
+                nr._managers = existing._managers; // Preserve while fetching managers
+              }
+              return nr;
+            });
+            runners.value = newRunners;
+
+            // Fetch managers in parallel
+            const managerResults = await Promise.allSettled(
+              runners.value.map(r => api(`/runners/${r.id}/managers?per_page=100`))
+            );
+
+            managerResults.forEach((res, i) => {
+              if (res.status === 'fulfilled') {
+                runners.value[i]._managers = res.value;
+              } else {
+                runners.value[i]._managers = [];
+              }
+            });
+
+            // Trigger deep reactivity if necessary, but Vue 3 handles array index mutations fine
+            runners.value = [...runners.value];
+
+            // Fetch jobs
+            const jobResults = await Promise.allSettled(
+              runners.value.slice(0, 10).map(r =>
+                api(`/runners/${r.id}/jobs?per_page=15&order_by=id`)
+                  .then(jbs => jbs.map(j => ({ ...j, _runner: r.description || '#' + r.id })))
+              )
+            );
+
+            let allJobs = jobResults.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
+            const seen = new Set();
+            allJobs = allJobs.filter(j => { if (seen.has(j.id)) return false; seen.add(j.id); return true; });
+            allJobs.sort((a, b) => b.id - a.id);
+
+            jobs.value = allJobs.slice(0, 25);
+            lastUpdate.value = new Date();
+
+          } catch (e) {
+            error.value = e.message + " — check GITLAB_API_TOKEN and GITLAB_GROUP_ID.";
+          } finally {
+            isInitialLoad.value = false;
+            if (manual) setTimeout(() => isRefreshing.value = false, 500); // Visual feedback duration
+            
+            clearTimeout(timer);
+            timer = setTimeout(() => refresh(false), 15000);
+          }
+        };
+
+        onMounted(() => {
+          initTheme();
+          refresh();
+        });
+
+        onUnmounted(() => {
+          clearTimeout(timer);
+        });
+
+        return {
+          isDark, isInitialLoad, isRefreshing, toggleDark, health, runners, jobs, stats, error, lastUpdateText,
+          ago, dur, statusColor, badgeClass, refresh
+        };
+      }
+    }).mount('#app');
+  </script>
 </body>
 </html>
