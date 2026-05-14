@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: gitlab-runner
+    runtime: docker
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: RUNNER_TOKEN
+        sync: false
+      - key: GITLAB_API_TOKEN
+        sync: false
+      - key: GITLAB_GROUP_ID
+        sync: false
+      - key: GITLAB_URL
+        value: https://gitlab.com
+      - key: RUNNER_EXECUTOR
+        value: shell
+      - key: RUNNER_CONCURRENT
+        value: "4"
+      - key: RUNNER_NAME
+        value: render-runner
+      - key: DASHBOARD_PORT
+        fromEnvironment:
+          name: PORT

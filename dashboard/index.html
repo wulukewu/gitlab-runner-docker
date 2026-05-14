@@ -11,163 +11,92 @@
     --border: #e2e5ea;
     --text: #1a1d23;
     --muted: #6b7280;
-    --green: #16a34a;
-    --green-bg: #dcfce7;
-    --red: #dc2626;
-    --red-bg: #fee2e2;
-    --blue: #2563eb;
-    --blue-bg: #dbeafe;
-    --yellow: #ca8a04;
-    --yellow-bg: #fef9c3;
+    --green: #16a34a; --green-bg: #dcfce7;
+    --red: #dc2626; --red-bg: #fee2e2;
+    --blue: #2563eb; --blue-bg: #dbeafe;
+    --yellow: #ca8a04; --yellow-bg: #fef9c3;
     --gray-bg: #f3f4f6;
+    --orange: #ea580c; --orange-bg: #ffedd5;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
 
-  /* ── Header ── */
   .header {
-    background: #18181b;
-    color: #fff;
+    background: #18181b; color: #fff;
     padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
   }
   .header h1 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
   .header h1 .logo { width: 22px; height: 22px; border-radius: 4px; background: #e24329; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
   .header-right { display: flex; align-items: center; gap: 12px; font-size: 13px; color: rgba(255,255,255,.6); }
   .header-right button {
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.15);
-    color: #fff;
-    padding: 5px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background .15s;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    color: #fff; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
   }
   .header-right button:hover { background: rgba(255,255,255,.2); }
+  .group-tag { background: rgba(255,255,255,.12); padding: 3px 10px; border-radius: 5px; font-size: 12px; color: rgba(255,255,255,.7); }
 
-  /* ── Container ── */
   .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
 
-  /* ── Stats row ── */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 28px;
-  }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
   @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
-  .stat {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 18px;
-  }
+  .stat { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
   .stat .value { font-size: 28px; font-weight: 700; line-height: 1.1; }
-  .stat .label { font-size: 12px; color: var(--muted); margin-top: 4px; letter-spacing: .3px; }
+  .stat .label { font-size: 12px; color: var(--muted); margin-top: 4px; }
 
-  /* ── Section ── */
   .section { margin-bottom: 28px; }
-  .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: .6px;
-    margin-bottom: 10px;
-  }
+  .section-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
 
-  /* ── Runner cards ── */
-  .runner-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 12px;
-  }
+  /* Runner card — parent runner */
   .runner-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 18px; margin-bottom: 12px;
   }
   .runner-card .top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
   .runner-card .name { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
   .runner-card .meta { font-size: 12px; color: var(--muted); line-height: 1.7; }
   .runner-card .meta span { margin-right: 14px; }
   .runner-card .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .runner-card .tag {
-    background: var(--gray-bg);
-    color: var(--muted);
-    font-size: 11px;
-    padding: 2px 8px;
-    border-radius: 4px;
-  }
+  .runner-card .tag { background: var(--gray-bg); color: var(--muted); font-size: 11px; padding: 2px 8px; border-radius: 4px; }
 
-  /* ── Status badges ── */
-  .badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 5px;
-    font-size: 12px;
-    font-weight: 600;
-    white-space: nowrap;
+  /* Instance table inside runner card */
+  .instances { margin-top: 14px; }
+  .instances-title { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .instance-table { width: 100%; border-collapse: collapse; }
+  .instance-table th {
+    text-align: left; padding: 6px 12px; font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
+    background: #fafbfc; border-bottom: 1px solid var(--border);
   }
+  .instance-table td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+  .instance-table tr:last-child td { border-bottom: none; }
+  .instance-table code { font-size: 11px; background: var(--gray-bg); padding: 1px 6px; border-radius: 3px; }
+
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; white-space: nowrap; }
   .badge-online, .badge-active, .badge-success { background: var(--green-bg); color: var(--green); }
-  .badge-offline, .badge-failed  { background: var(--red-bg); color: var(--red); }
-  .badge-paused   { background: var(--yellow-bg); color: var(--yellow); }
-  .badge-running  { background: var(--blue-bg); color: var(--blue); }
-  .badge-canceled, .badge-pending, .badge-created { background: var(--gray-bg); color: var(--muted); }
+  .badge-offline, .badge-failed { background: var(--red-bg); color: var(--red); }
+  .badge-paused { background: var(--yellow-bg); color: var(--yellow); }
+  .badge-running { background: var(--blue-bg); color: var(--blue); }
+  .badge-stale { background: var(--orange-bg); color: var(--orange); }
+  .badge-canceled, .badge-pending, .badge-created, .badge-skipped, .badge-idle { background: var(--gray-bg); color: var(--muted); }
 
-  /* ── Status dot ── */
   .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-  .dot-green  { background: var(--green); }
-  .dot-red    { background: var(--red); }
-  .dot-yellow { background: var(--yellow); }
+  .dot-green { background: var(--green); } .dot-red { background: var(--red); } .dot-yellow { background: var(--yellow); }
 
-  /* ── Jobs table ── */
-  .table-wrap {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  table { width: 100%; border-collapse: collapse; }
-  th {
-    text-align: left;
-    padding: 10px 16px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: var(--muted);
-    background: #fafbfc;
-    border-bottom: 1px solid var(--border);
-  }
-  td {
-    padding: 10px 16px;
-    font-size: 13px;
-    border-bottom: 1px solid #f3f4f6;
-  }
-  tr:last-child td { border-bottom: none; }
+  .table-wrap { background: var(--card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  table.jobs { width: 100%; border-collapse: collapse; }
+  table.jobs th { text-align: left; padding: 10px 16px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--border); }
+  table.jobs td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid #f3f4f6; }
+  table.jobs tr:last-child td { border-bottom: none; }
   td a { color: var(--blue); text-decoration: none; }
   td a:hover { text-decoration: underline; }
 
-  /* ── Utility ── */
   .empty { text-align: center; padding: 48px 20px; color: var(--muted); font-size: 14px; }
-  .error-banner {
-    background: var(--red-bg);
-    color: var(--red);
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 16px;
-    font-size: 14px;
-  }
+  .error-banner { background: var(--red-bg); color: var(--red); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 14px; }
   .pulse { animation: pulse 1.5s ease-in-out infinite; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+  .loading-instances { font-size: 12px; color: var(--muted); padding: 8px 0; }
 </style>
 </head>
 <body>
@@ -175,7 +104,7 @@
 <div class="header">
   <h1>
     <span class="logo">G</span> Runner Dashboard
-    <span id="groupIdLabel" style="display:none; font-size: 11px; background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 4px; margin-left: 8px; color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.15);">Group: <span id="groupIdText"></span></span>
+    <span class="group-tag" id="groupTag" style="display:none"></span>
   </h1>
   <div class="header-right">
     <span id="lastUpdate"></span>
@@ -188,14 +117,14 @@
 
   <div class="stats">
     <div class="stat"><div class="value" id="sTotal">–</div><div class="label">Total Runners</div></div>
+    <div class="stat"><div class="value" id="sInstances">–</div><div class="label">Instances</div></div>
     <div class="stat"><div class="value" id="sOnline">–</div><div class="label">Online</div></div>
     <div class="stat"><div class="value" id="sRunning">–</div><div class="label">Running Jobs</div></div>
-    <div class="stat"><div class="value" id="sConcurrent">–</div><div class="label">Concurrent Limit</div></div>
   </div>
 
   <div class="section">
     <div class="section-title">Runners</div>
-    <div class="runner-grid" id="runners"><div class="empty pulse">Loading runners…</div></div>
+    <div id="runners"><div class="empty pulse">Loading runners…</div></div>
   </div>
 
   <div class="section">
@@ -213,64 +142,82 @@
     return r.json();
   }
 
-  function ago(dateStr) {
-    if (!dateStr) return '–';
-    const s = Math.floor((Date.now() - new Date(dateStr)) / 1000);
+  function ago(d) {
+    if (!d) return '–';
+    const s = Math.floor((Date.now() - new Date(d)) / 1000);
     if (s < 60) return s + 's ago';
     if (s < 3600) return Math.floor(s / 60) + 'm ago';
     if (s < 86400) return Math.floor(s / 3600) + 'h ago';
     return Math.floor(s / 86400) + 'd ago';
   }
 
-  function dur(seconds) {
-    if (!seconds) return '–';
-    const s = Math.round(seconds);
+  function dur(sec) {
+    if (!sec) return '–';
+    const s = Math.round(sec);
     if (s < 60) return s + 's';
     if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
     return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
   }
 
-  function badge(status) {
-    return `<span class="badge badge-${status || 'unknown'}">${status || 'unknown'}</span>`;
+  function badge(st) {
+    return `<span class="badge badge-${st || 'unknown'}">${st || 'unknown'}</span>`;
   }
 
-  function dot(status) {
-    const c = (status === 'online' || status === 'active') ? 'green' : status === 'paused' ? 'yellow' : 'red';
+  function dot(st) {
+    const c = (st === 'online' || st === 'active') ? 'green' : st === 'paused' ? 'yellow' : 'red';
     return `<span class="dot dot-${c}"></span>`;
+  }
+
+  function renderInstancesTable(managers) {
+    if (!managers || managers.length === 0) return '';
+    return `
+      <div class="instances">
+        <div class="instances-title">Instances (${managers.length})</div>
+        <table class="instance-table">
+          <thead><tr>
+            <th>Status</th><th>System ID</th><th>Version</th>
+            <th>IP</th><th>Executor</th><th>Platform</th><th>Last Contact</th>
+          </tr></thead>
+          <tbody>${managers.map(m => `<tr>
+            <td>${badge(m.status || 'offline')}</td>
+            <td><code>${m.system_id || m.system_xid || '–'}</code></td>
+            <td>${m.version || '–'}</td>
+            <td>${m.ip_address || '–'}</td>
+            <td>${m.executor_type || m.config?.executor || '–'}</td>
+            <td>${m.architecture || '–'}${m.platform ? '/' + m.platform : ''}</td>
+            <td>${m.contacted_at ? ago(m.contacted_at) : '–'}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>`;
   }
 
   async function refresh() {
     try {
       document.getElementById('error').innerHTML = '';
 
-      // Fetch health info & runners in parallel
       const [health, runners] = await Promise.all([
         api('/health').catch(() => null),
         api('/runners?per_page=100')
       ]);
 
-      if (health) {
-        document.getElementById('sConcurrent').textContent = health.concurrent;
-        if (health.gitlab_group_id) {
-          document.getElementById('groupIdLabel').style.display = 'inline-block';
-          document.getElementById('groupIdText').textContent = health.gitlab_group_id;
-        }
+      if (health && health.group_id) {
+        const tag = document.getElementById('groupTag');
+        tag.textContent = 'Group ' + health.group_id;
+        tag.style.display = '';
       }
 
-      const onlineCount = runners.filter(r => r.status === 'online' || r.online).length;
       document.getElementById('sTotal').textContent = runners.length;
-      document.getElementById('sOnline').textContent = onlineCount;
 
-      // Render runner cards
-      const grid = document.getElementById('runners');
+      // Render initial runner cards (without instances yet)
+      const runnersEl = document.getElementById('runners');
       if (runners.length === 0) {
-        grid.innerHTML = '<div class="empty">No runners found — check GITLAB_API_TOKEN</div>';
+        runnersEl.innerHTML = '<div class="empty">No runners found — check GITLAB_API_TOKEN and GITLAB_GROUP_ID</div>';
       } else {
-        grid.innerHTML = runners.map(r => {
+        runnersEl.innerHTML = runners.map(r => {
           const st = r.status || (r.online ? 'online' : 'offline');
           const tags = (r.tag_list || []).map(t => `<span class="tag">${t}</span>`).join('');
           return `
-            <div class="runner-card">
+            <div class="runner-card" id="runner-${r.id}">
               <div class="top">
                 <div class="name">${dot(st)} ${r.description || '#' + r.id}</div>
                 ${badge(st)}
@@ -282,11 +229,41 @@
                 ${r.architecture ? '<span>' + r.architecture + '</span>' : ''}
               </div>
               ${tags ? '<div class="tags">' + tags + '</div>' : ''}
+              <div class="instances-slot"><div class="loading-instances pulse">Loading instances…</div></div>
             </div>`;
         }).join('');
       }
 
-      // Fetch jobs for each runner (parallel, limit to first 10 runners)
+      // Fetch managers for each runner in parallel
+      let totalInstances = 0;
+      let totalOnline = 0;
+      const managerResults = await Promise.allSettled(
+        runners.map(r => api(`/runners/${r.id}/managers?per_page=100`))
+      );
+
+      runners.forEach((r, i) => {
+        const card = document.getElementById(`runner-${r.id}`);
+        if (!card) return;
+        const slot = card.querySelector('.instances-slot');
+
+        if (managerResults[i].status === 'fulfilled') {
+          const managers = managerResults[i].value;
+          totalInstances += managers.length;
+          totalOnline += managers.filter(m => m.status === 'online').length;
+          slot.innerHTML = renderInstancesTable(managers);
+        } else {
+          // /managers endpoint might not exist — show runner-level info only
+          slot.innerHTML = '';
+          totalInstances += 1;
+          const st = r.status || (r.online ? 'online' : 'offline');
+          if (st === 'online') totalOnline += 1;
+        }
+      });
+
+      document.getElementById('sInstances').textContent = totalInstances;
+      document.getElementById('sOnline').textContent = totalOnline;
+
+      // Fetch jobs
       const jobResults = await Promise.allSettled(
         runners.slice(0, 10).map(r =>
           api(`/runners/${r.id}/jobs?per_page=15&order_by=id`)
@@ -294,30 +271,21 @@
         )
       );
 
-      let allJobs = jobResults
-        .filter(r => r.status === 'fulfilled')
-        .flatMap(r => r.value);
-
-      // Deduplicate by job ID, sort newest first
+      let allJobs = jobResults.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
       const seen = new Set();
       allJobs = allJobs.filter(j => { if (seen.has(j.id)) return false; seen.add(j.id); return true; });
       allJobs.sort((a, b) => b.id - a.id);
 
-      const runningCount = allJobs.filter(j => j.status === 'running').length;
-      document.getElementById('sRunning').textContent = runningCount;
+      document.getElementById('sRunning').textContent = allJobs.filter(j => j.status === 'running').length;
 
-      // Render jobs table
       const recent = allJobs.slice(0, 25);
       const jobsEl = document.getElementById('jobs');
       if (recent.length === 0) {
         jobsEl.innerHTML = '<div class="empty">No recent jobs</div>';
       } else {
         jobsEl.innerHTML = `
-          <div class="table-wrap"><table>
-            <thead><tr>
-              <th>Status</th><th>Job</th><th>Pipeline</th>
-              <th>Stage</th><th>Runner</th><th>Duration</th><th>When</th>
-            </tr></thead>
+          <div class="table-wrap"><table class="jobs">
+            <thead><tr><th>Status</th><th>Job</th><th>Pipeline</th><th>Stage</th><th>Runner</th><th>Duration</th><th>When</th></tr></thead>
             <tbody>${recent.map(j => `<tr>
               <td>${badge(j.status)}</td>
               <td>${j.web_url ? '<a href="' + j.web_url + '" target="_blank">#' + j.id + '</a>' : '#' + j.id}</td>
@@ -333,7 +301,7 @@
       document.getElementById('lastUpdate').textContent = 'Updated ' + new Date().toLocaleTimeString();
     } catch (e) {
       document.getElementById('error').innerHTML =
-        `<div class="error-banner">⚠ ${e.message} — check GITLAB_API_TOKEN is set and has read_api scope.</div>`;
+        `<div class="error-banner">⚠ ${e.message} — check GITLAB_API_TOKEN and GITLAB_GROUP_ID.</div>`;
     }
 
     clearTimeout(timer);

@@ -28,35 +28,26 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def _health(self):
-        """Return local config info for the dashboard."""
         info = {
             'concurrent': int(os.environ.get('RUNNER_CONCURRENT', '4')),
             'executor': os.environ.get('RUNNER_EXECUTOR', 'shell'),
             'gitlab_url': GITLAB_URL,
-            'gitlab_group_id': GITLAB_GROUP_ID,
             'runner_name': os.environ.get('RUNNER_NAME', 'gitlab-runner'),
+            'group_id': GITLAB_GROUP_ID or None,
         }
         self._json_response(200, info)
 
     def _proxy_gitlab(self):
-        """Forward /api/... to GitLab REST API."""
         api_path = self.path[4:]  # strip leading /api
 
-        # If GITLAB_GROUP_ID is set, redirect /runners to /groups/{id}/runners
-        if GITLAB_GROUP_ID and api_path.startswith('/runners'):
-            query = ''
-            if '?' in api_path:
-                api_path, query = api_path.split('?', 1)
-                query = '?' + query
-            
-            if api_path == '/runners':
-                api_path = f'/groups/{GITLAB_GROUP_ID}/runners{query}'
-            else:
-                # keep original path for /runners/{id} etc.
-                api_path = api_path + query
+        # Route /runners to group-scoped endpoint when GITLAB_GROUP_ID is set
+        # Add type=group_type to exclude GitLab shared runners
+        if GITLAB_GROUP_ID and api_path.startswith('/runners') and '/runners/' not in api_path:
+            api_path = api_path.replace('/runners', f'/groups/{GITLAB_GROUP_ID}/runners', 1)
+            sep = '&' if '?' in api_path else '?'
+            api_path += f'{sep}type=group_type'
 
         url = f'{GITLAB_URL}/api/v4{api_path}'
-
         req = urllib.request.Request(url)
         req.add_header('PRIVATE-TOKEN', GITLAB_API_TOKEN)
 
@@ -83,12 +74,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps(obj).encode())
 
     def log_message(self, fmt, *args):
-        # Keep logs minimal — only errors
         if args and str(args[1]).startswith('5'):
             super().log_message(fmt, *args)
 
 
 if __name__ == '__main__':
+    if GITLAB_GROUP_ID:
+        print(f'Dashboard scoped to group {GITLAB_GROUP_ID}')
     with http.server.HTTPServer(('0.0.0.0', PORT), Handler) as srv:
         print(f'Dashboard listening on :{PORT}')
         srv.serve_forever()
