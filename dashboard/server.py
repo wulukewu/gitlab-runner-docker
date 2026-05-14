@@ -41,11 +41,31 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         api_path = self.path[4:]  # strip leading /api
 
         # Route /runners to group-scoped endpoint when GITLAB_GROUP_ID is set
-        # Add type=group_type to exclude GitLab shared runners
+        # Fetch both group and project runners, exclude instance (shared) runners
         if GITLAB_GROUP_ID and api_path.startswith('/runners') and '/runners/' not in api_path:
-            api_path = api_path.replace('/runners', f'/groups/{GITLAB_GROUP_ID}/runners', 1)
-            sep = '&' if '?' in api_path else '?'
-            api_path += f'{sep}type=group_type'
+            # Make two calls: group_type + project_type, merge results
+            results = []
+            for rtype in ('group_type', 'project_type'):
+                group_path = api_path.replace('/runners', f'/groups/{GITLAB_GROUP_ID}/runners', 1)
+                sep = '&' if '?' in group_path else '?'
+                typed_path = f'{group_path}{sep}type={rtype}'
+                url = f'{GITLAB_URL}/api/v4{typed_path}'
+                req = urllib.request.Request(url)
+                req.add_header('PRIVATE-TOKEN', GITLAB_API_TOKEN)
+                try:
+                    with urllib.request.urlopen(req, timeout=15) as resp:
+                        results.extend(json.loads(resp.read()))
+                except Exception:
+                    pass
+            # Deduplicate by runner ID
+            seen = set()
+            unique = []
+            for r in results:
+                if r.get('id') not in seen:
+                    seen.add(r.get('id'))
+                    unique.append(r)
+            self._json_response(200, unique)
+            return
 
         url = f'{GITLAB_URL}/api/v4{api_path}'
         req = urllib.request.Request(url)
