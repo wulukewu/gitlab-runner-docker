@@ -88,5 +88,8 @@ echo "========== Generated config.toml =========="
 cat "$CONFIG_FILE"
 echo "============================================"
 
+# ── Export RUNNER_SYSTEM_ID to keep it consistent ──
+export RUNNER_SYSTEM_ID="runner-$(echo "${RUNNER_NAME}-${DASHBOARD_PORT:-8080}" | md5sum | cut -c1-12)"
+
 # ── Start supervisord (manages runner + dashboard) ──
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
