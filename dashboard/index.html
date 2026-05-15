@@ -279,7 +279,7 @@
               </thead>
               <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50 relative">
                 <transition-group name="list">
-                  <tr v-for="j in jobs" :key="j.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
+                  <tr v-for="j in paginatedJobs" :key="j.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
                     <td class="px-5 py-3"><span :class="badgeClass(j.status)">{{ j.status }}</span></td>
                     <td class="px-5 py-3">
                       <a v-if="j.web_url" :href="j.web_url" target="_blank" class="font-medium text-brand hover:text-brandDark transition-colors">#{{ j.id }}</a>
@@ -297,6 +297,25 @@
                 </transition-group>
               </tbody>
             </table>
+          </div>
+          <!-- Pagination Controls -->
+          <div v-if="jobs.length > 0" class="px-5 py-3 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex items-center justify-between">
+            <div class="text-sm text-slate-500 dark:text-slate-400">
+              Showing {{ (jobsCurrentPage - 1) * jobsPerPage + 1 }} to {{ Math.min(jobsCurrentPage * jobsPerPage, jobs.length) }} of {{ jobs.length }} jobs
+            </div>
+            <div class="flex items-center gap-1">
+              <button @click="prevPage" :disabled="jobsCurrentPage === 1" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-all" title="Previous Page">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+              <span class="text-sm text-slate-500 dark:text-slate-400 font-medium px-3 tabular-nums">{{ jobsCurrentPage }} / {{ jobsTotalPages }}</span>
+              <button @click="nextPage" :disabled="jobsCurrentPage === jobsTotalPages" class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 disabled:opacity-30 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-slate-200 transition-all" title="Next Page">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -318,6 +337,22 @@
         const error = ref('');
         const lastUpdate = ref(new Date());
         let timer = null;
+
+        // Pagination state
+        const jobsCurrentPage = ref(1);
+        const jobsPerPage = 15;
+
+        const paginatedJobs = computed(() => {
+          const start = (jobsCurrentPage.value - 1) * jobsPerPage;
+          return jobs.value.slice(start, start + jobsPerPage);
+        });
+
+        const jobsTotalPages = computed(() => {
+          return Math.ceil(jobs.value.length / jobsPerPage) || 1;
+        });
+
+        const prevPage = () => { if (jobsCurrentPage.value > 1) jobsCurrentPage.value--; };
+        const nextPage = () => { if (jobsCurrentPage.value < jobsTotalPages.value) jobsCurrentPage.value++; };
 
         // Statistics computed from reactive data
         const stats = computed(() => {
@@ -424,65 +459,43 @@
           if (manual) isRefreshing.value = true;
           
           try {
-            const [healthData, runnersData] = await Promise.all([
-              api('/health').catch(() => null),
-              api('/runners?per_page=100')
-            ]);
+            const state = await api('/state');
             
-            health.value = healthData;
-            error.value = '';
-
-            // Update runners without destroying existing state to avoid flickering
-            const newRunners = runnersData.map(nr => {
-              nr._status = nr.status || (nr.online ? 'online' : 'offline');
-              const existing = runners.value.find(r => r.id === nr.id);
-              if (existing) {
-                nr._managers = existing._managers; // Preserve while fetching managers
+            if (!state.ready) {
+              if (isInitialLoad.value) {
+                // Backend still warming up, retry shortly
+                clearTimeout(timer);
+                timer = setTimeout(() => refresh(false), 2000);
+                return;
               }
-              return nr;
-            });
-            runners.value = newRunners;
-
-            // Fetch managers in parallel
-            const managerResults = await Promise.allSettled(
-              runners.value.map(r => api(`/runners/${r.id}/managers?per_page=100`))
-            );
-
-            managerResults.forEach((res, i) => {
-              if (res.status === 'fulfilled') {
-                runners.value[i]._managers = res.value;
+            } else {
+              health.value = state.health;
+              
+              const newRunners = state.runners.map(nr => {
+                nr._status = nr.status || (nr.online ? 'online' : 'offline');
+                return nr;
+              });
+              runners.value = newRunners;
+              jobs.value = state.jobs;
+              
+              if (state.error && !manual) {
+                error.value = state.error + " — background sync failed.";
               } else {
-                runners.value[i]._managers = [];
+                error.value = '';
               }
-            });
-
-            // Trigger deep reactivity if necessary, but Vue 3 handles array index mutations fine
-            runners.value = [...runners.value];
-
-            // Fetch jobs
-            const jobResults = await Promise.allSettled(
-              runners.value.slice(0, 10).map(r =>
-                api(`/runners/${r.id}/jobs?per_page=15&order_by=id`)
-                  .then(jbs => jbs.map(j => ({ ...j, _runner: r.description || '#' + r.id })))
-              )
-            );
-
-            let allJobs = jobResults.filter(r => r.status === 'fulfilled').flatMap(r => r.value);
-            const seen = new Set();
-            allJobs = allJobs.filter(j => { if (seen.has(j.id)) return false; seen.add(j.id); return true; });
-            allJobs.sort((a, b) => b.id - a.id);
-
-            jobs.value = allJobs.slice(0, 25);
-            lastUpdate.value = new Date();
-
+              
+              if (state.last_updated) {
+                 lastUpdate.value = new Date(state.last_updated * 1000);
+              }
+            }
           } catch (e) {
-            error.value = e.message + " — check GITLAB_API_TOKEN and GITLAB_GROUP_ID.";
+            error.value = e.message + " — API unreachable.";
           } finally {
             isInitialLoad.value = false;
-            if (manual) setTimeout(() => isRefreshing.value = false, 500); // Visual feedback duration
+            if (manual) setTimeout(() => isRefreshing.value = false, 500);
             
             clearTimeout(timer);
-            timer = setTimeout(() => refresh(false), 15000);
+            timer = setTimeout(() => refresh(false), 5000); // Polling fast since backend caches
           }
         };
 
@@ -497,7 +510,8 @@
 
         return {
           isDark, isInitialLoad, isRefreshing, toggleDark, health, runners, jobs, stats, error, lastUpdateText,
-          ago, dur, statusColor, badgeClass, refresh
+          ago, dur, statusColor, badgeClass, refresh,
+          paginatedJobs, jobsCurrentPage, jobsTotalPages, jobsPerPage, prevPage, nextPage
         };
       }
     }).mount('#app');
