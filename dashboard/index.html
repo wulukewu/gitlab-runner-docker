@@ -379,6 +379,7 @@
         });
 
         const lastUpdateText = computed(() => {
+          if (isInitialLoad.value || !health.value) return 'Syncing...';
           return `Updated ${lastUpdate.value.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit', hour12: false})}`;
         });
 
@@ -459,7 +460,8 @@
           if (manual) isRefreshing.value = true;
           
           try {
-            const state = await api('/state');
+            const url = manual ? '/state?force=true' : '/state';
+            const state = await api(url);
             
             if (!state.ready) {
               if (isInitialLoad.value) {
@@ -492,7 +494,7 @@
             error.value = e.message + " — API unreachable.";
           } finally {
             isInitialLoad.value = false;
-            if (manual) setTimeout(() => isRefreshing.value = false, 500);
+            if (manual) isRefreshing.value = false;
             
             clearTimeout(timer);
             timer = setTimeout(() => refresh(false), 5000); // Polling fast since backend caches

@@ -23,9 +23,11 @@ STATE = {
     'jobs': [],
     'last_updated': 0,
     'error': None,
-    'ready': False
+    'ready': False,
+    'sync_generation': 0
 }
 STATE_LOCK = threading.Lock()
+POLL_EVENT = threading.Event()
 
 def fetch_gitlab_api(path, fetch_all=False, max_pages=1):
     results = []
@@ -122,13 +124,16 @@ def poll_gitlab():
                 STATE['error'] = None
                 STATE['ready'] = True
                 STATE['last_updated'] = time.time()
+                STATE['sync_generation'] += 1
                 
         except Exception as e:
             print(f"Poller error: {e}")
             with STATE_LOCK:
                 STATE['error'] = str(e)
+                STATE['sync_generation'] += 1
                 
-        time.sleep(15)
+        POLL_EVENT.wait(15)
+        POLL_EVENT.clear()
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -138,7 +143,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/health':
             self._health()
-        elif self.path == '/api/state':
+        elif self.path.startswith('/api/state'):
             self._state()
         elif self.path.startswith('/api/'):
             self._proxy_gitlab()
@@ -156,6 +161,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self._json_response(200, info)
 
     def _state(self):
+        if 'force=true' in self.path:
+            with STATE_LOCK:
+                target_gen = STATE.get('sync_generation', 0) + 1
+            POLL_EVENT.set()
+            
+            # Wait until the background poller finishes its next cycle (timeout 30s)
+            start_time = time.time()
+            while time.time() - start_time < 30:
+                with STATE_LOCK:
+                    if STATE.get('sync_generation', 0) >= target_gen:
+                        break
+                time.sleep(0.2)
+                
         with STATE_LOCK:
             self._json_response(200, STATE)
     def _proxy_gitlab(self):
